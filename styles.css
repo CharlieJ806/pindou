@@ -1078,6 +1078,7 @@ body.dragging .drop-overlay { display: grid; }
   max-height: 54dvh;
   width: auto;
   height: auto;
+  -webkit-touch-callout: default;
   box-shadow: 0 6px 22px rgba(50, 30, 10, .16);
 }
 .export-actions {

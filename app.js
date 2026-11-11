@@ -2452,8 +2452,9 @@
     var w = state.settings.width;
     var h = state.settings.height;
     var used = getUsedColors();
-    var mobileExport = isMobileExport();
-    var cell = mobileExport
+    var safari = /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|Edg|OPR|Android/i.test(navigator.userAgent);
+    var compactExport = isMobileExport() || safari;
+    var cell = compactExport
       ? Math.max(16, Math.min(40, Math.floor(3200 / Math.max(w, h))))
       : Math.max(16, Math.min(44, Math.floor(4400 / Math.max(w, h))));
     var S = cell / 26;
