@@ -68,10 +68,9 @@ pindou.pokedriver.me
 
 ## 3. SSL 设置
 
-Cloudflare Dashboard → 你的域名 → **SSL/TLS**：
+Cloudflare Pages 的自定义域会自动签发证书，**通常不需要改整个域名的 SSL 模式**。
 
-- Overview → 加密模式：**Full (strict)**
-- Edge Certificates → 开启 **Always Use HTTPS**
+`pokedriver.me` 根域名上已有 Next.js 站点，改全局 SSL 设置可能影响现有站。先确认现有站正常，再决定是否开启 **Always Use HTTPS**；不要为了拼豆应用盲目切换 `Full (strict)`。
 
 ## 4. 以后更新
 
