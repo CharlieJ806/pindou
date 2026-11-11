@@ -582,30 +582,28 @@
 
   function drawRulers(x, y, w, h, z) {
     if (!state.showCoords) return;
-    var step = z >= 7 ? 5 : (z >= 3.2 ? 10 : 20);
-    ctx.font = '500 9px ' + MONO;
+    var step = z >= 12 ? 1 : (z >= 5 ? 5 : (z >= 3.2 ? 10 : 20));
+    ctx.font = '500 ' + (step === 1 ? 8 : 9) + 'px ' + MONO;
     ctx.fillStyle = 'rgba(78, 64, 44, .66)';
     ctx.textBaseline = 'middle';
 
     if (y > 18) {
       ctx.textAlign = 'center';
-      for (var gx = 0; gx < w; gx++) {
-        var n = gx + 1;
-        if (n !== 1 && n % step !== 0) continue;
-        var px = x + (gx + 0.5) * z;
-        if (px < 12 || px > state.cssW - 12) continue;
-        ctx.fillText(String(n), px, y - 6);
+      for (var gx = 0; gx <= w; gx++) {
+        if (gx % step !== 0 && gx !== w) continue;
+        var px = x + gx * z;
+        if (px < 8 || px > state.cssW - 8) continue;
+        ctx.fillText(String(gx), px, y - 6);
       }
     }
 
     if (x > 28) {
       ctx.textAlign = 'right';
-      for (var gy = 0; gy < h; gy++) {
-        var m = gy + 1;
-        if (m !== 1 && m % step !== 0) continue;
-        var py = y + (gy + 0.5) * z;
-        if (py < 12 || py > state.cssH - 12) continue;
-        ctx.fillText(String(m), x - 7, py);
+      for (var gy = 0; gy <= h; gy++) {
+        if (gy % step !== 0 && gy !== h) continue;
+        var py = y + gy * z;
+        if (py < 10 || py > state.cssH - 10) continue;
+        ctx.fillText(String(gy), x - 7, py);
       }
     }
 
@@ -2315,35 +2313,30 @@
   }
 
   function drawExportRulers(c, px, py, pw, ph, w, h, cell) {
-    c.font = '500 9px ' + MONO;
+    var dense = Math.max(w, h) > 120;
+    c.font = '500 ' + (dense ? 7.5 : 9) + 'px ' + MONO;
     c.fillStyle = 'rgba(90, 78, 60, .72)';
     c.textBaseline = 'middle';
-    var step = 5;
     var i;
 
+    /* 标的是格子线：0 … w / 0 … h，每一条线都标。 */
     c.textAlign = 'center';
-    for (i = 0; i < w; i++) {
-      var n = i + 1;
-      if (n !== 1 && n % step !== 0) continue;
-      var x = px + (i + 0.5) * cell;
-      c.fillText(String(n), x, py - 9);
-      c.fillText(String(n), x, py + ph + 11);
+    for (i = 0; i <= w; i++) {
+      var x = px + i * cell;
+      c.fillText(String(i), x, py - 9);
+      c.fillText(String(i), x, py + ph + 11);
     }
 
     c.textAlign = 'right';
-    for (i = 0; i < h; i++) {
-      var m = i + 1;
-      if (m !== 1 && m % step !== 0) continue;
-      var y = py + (i + 0.5) * cell;
-      c.fillText(String(m), px - 8, y);
+    for (i = 0; i <= h; i++) {
+      var y = py + i * cell;
+      c.fillText(String(i), px - 8, y);
     }
 
     c.textAlign = 'left';
-    for (i = 0; i < h; i++) {
-      var m2 = i + 1;
-      if (m2 !== 1 && m2 % step !== 0) continue;
-      var y2 = py + (i + 0.5) * cell;
-      c.fillText(String(m2), px + pw + 8, y2);
+    for (i = 0; i <= h; i++) {
+      var y2 = py + i * cell;
+      c.fillText(String(i), px + pw + 8, y2);
     }
 
     if (w > BOARD_SIZE || h > BOARD_SIZE) {
@@ -2427,12 +2420,8 @@
 
     xctx.fillStyle = '#7b7264';
     xctx.font = '400 12px ' + SANS;
-    xctx.fillText(w + ' × ' + h + ' 颗   ·   ' + fmtNum(state.total) + ' 颗豆   ·   ' +
-      used.length + ' 色   ·   ' + boardCount(w, h) + ' 块板', pad, pad + 58);
-
-    xctx.fillStyle = '#9a9080';
-    xctx.font = '400 10px ' + SANS;
-    xctx.fillText('MARD 221 色卡   ·   每 52 颗为一块拼板', pad, pad + 78);
+    xctx.fillText(w + ' × ' + h + '   ·   ' + fmtNum(state.total) + ' 颗豆   ·   ' +
+      used.length + ' 色', pad, pad + 58);
 
     xctx.textAlign = 'right';
     xctx.fillStyle = '#d45a38';
