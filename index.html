@@ -56,6 +56,9 @@
   </div>
 
   <div class="header-actions">
+    <button class="btn ghost" id="btnNewDesign" type="button" title="新建图纸">
+      <svg class="icon"><use href="#i-plus"/></svg><span class="label">新建</span>
+    </button>
     <button class="btn ghost" id="btnProjects" type="button" title="项目列表">
       <svg class="icon"><use href="#i-folder"/></svg><span class="label">项目</span>
     </button>
@@ -386,6 +389,24 @@
   <div class="dialog-foot">
     <button class="btn subtle" id="btnNewProject" type="button"><svg class="icon"><use href="#i-plus"/></svg>新建图纸</button>
   </div>
+</dialog>
+
+<dialog class="dialog export-dialog" id="exportDialog">
+  <div class="dialog-head">
+    <div>
+      <h2>图纸已生成</h2>
+      <p class="dialog-sub" id="exportMeta">PNG</p>
+    </div>
+    <button class="icon-btn" id="btnCloseExport" type="button" title="关闭"><svg class="icon"><use href="#i-close"/></svg></button>
+  </div>
+  <div class="export-preview-wrap">
+    <img id="exportPreview" alt="导出的拼豆图纸">
+  </div>
+  <div class="export-actions">
+    <button class="btn primary" id="btnExportShare" type="button" hidden>保存到相册 / 分享</button>
+    <button class="btn subtle" id="btnExportDownload" type="button">下载 PNG</button>
+  </div>
+  <p class="export-note">手机浏览器不能静默写入相册。可点「保存到相册 / 分享」走系统分享，或长按图片选择「存储图像」。</p>
 </dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>

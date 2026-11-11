@@ -31,6 +31,7 @@
   var els = {
     projectName: byId('projectName'),
     saveState: byId('saveState'),
+    btnNewDesign: byId('btnNewDesign'),
     btnProjects: byId('btnProjects'),
     btnSave: byId('btnSave'),
     btnExport: byId('btnExport'),
@@ -94,6 +95,13 @@
     projectList: byId('projectList'),
     btnNewProject: byId('btnNewProject'),
     btnCloseProjects: byId('btnCloseProjects'),
+
+    exportDialog: byId('exportDialog'),
+    exportMeta: byId('exportMeta'),
+    exportPreview: byId('exportPreview'),
+    btnCloseExport: byId('btnCloseExport'),
+    btnExportShare: byId('btnExportShare'),
+    btnExportDownload: byId('btnExportDownload'),
 
     dropOverlay: byId('dropOverlay'),
     toast: byId('toast'),
@@ -587,10 +595,23 @@
     ctx.fillStyle = 'rgba(78, 64, 44, .66)';
     ctx.textBaseline = 'middle';
 
+    function ticks(size) {
+      var out = [];
+      for (var i = 0; i <= size; i++) {
+        if (i % step === 0 || i === size) out.push(i);
+      }
+      /* 末端数字和上一个刻度太近时让位给末端，避免 50 / 52 叠在一起。 */
+      if (step > 1 && out.length > 1 && size - out[out.length - 2] < 2.5) out.splice(out.length - 2, 1);
+      return out;
+    }
+
+    var xs = ticks(w);
+    var ys = ticks(h);
+
     if (y > 18) {
       ctx.textAlign = 'center';
-      for (var gx = 0; gx <= w; gx++) {
-        if (gx % step !== 0 && gx !== w) continue;
+      for (var xi = 0; xi < xs.length; xi++) {
+        var gx = xs[xi];
         var px = x + gx * z;
         if (px < 8 || px > state.cssW - 8) continue;
         ctx.fillText(String(gx), px, y - 6);
@@ -599,8 +620,8 @@
 
     if (x > 28) {
       ctx.textAlign = 'right';
-      for (var gy = 0; gy <= h; gy++) {
-        if (gy % step !== 0 && gy !== h) continue;
+      for (var yi = 0; yi < ys.length; yi++) {
+        var gy = ys[yi];
         var py = y + gy * z;
         if (py < 10 || py > state.cssH - 10) continue;
         ctx.fillText(String(gy), x - 7, py);
@@ -2262,8 +2283,9 @@
 
   function drawExportGrid(c, px, py, pw, ph, w, h, cell) {
     var i;
+    var s = cell / 26;
     c.strokeStyle = 'rgba(35, 28, 18, .16)';
-    c.lineWidth = 0.7;
+    c.lineWidth = Math.max(0.7, 0.7 * s);
     c.beginPath();
     for (i = 1; i < w; i++) {
       var x = px + i * cell + 0.5;
@@ -2278,7 +2300,7 @@
     c.stroke();
 
     c.strokeStyle = 'rgba(35, 28, 18, .3)';
-    c.lineWidth = 1;
+    c.lineWidth = Math.max(1, s);
     c.beginPath();
     for (i = 5; i < w; i += 5) {
       var x5 = px + i * cell + 0.5;
@@ -2294,8 +2316,8 @@
 
     if (w > BOARD_SIZE || h > BOARD_SIZE) {
       c.strokeStyle = 'rgba(188, 75, 45, .72)';
-      c.lineWidth = 1.6;
-      c.setLineDash([6, 4]);
+      c.lineWidth = Math.max(1.2, 1.6 * s);
+      c.setLineDash([6 * s, 4 * s]);
       c.beginPath();
       for (i = BOARD_SIZE; i < w; i += BOARD_SIZE) {
         var bx = px + i * cell + 0.5;
@@ -2313,8 +2335,10 @@
   }
 
   function drawExportRulers(c, px, py, pw, ph, w, h, cell) {
+    var s = cell / 26;
     var dense = Math.max(w, h) > 120;
-    c.font = '500 ' + (dense ? 7.5 : 9) + 'px ' + MONO;
+    var fs = dense ? Math.max(8, 9 * s) : Math.max(9, 10 * s);
+    c.font = '500 ' + fs + 'px ' + MONO;
     c.fillStyle = 'rgba(90, 78, 60, .72)';
     c.textBaseline = 'middle';
     var i;
@@ -2341,25 +2365,25 @@
 
     if (w > BOARD_SIZE || h > BOARD_SIZE) {
       c.fillStyle = 'rgba(188, 75, 45, .9)';
-      c.font = '700 8px ' + SANS;
+      c.font = '700 ' + Math.max(8, 8 * s) + 'px ' + SANS;
       var cols = Math.ceil(w / BOARD_SIZE);
       var rows = Math.ceil(h / BOARD_SIZE);
       c.textAlign = 'center';
       for (i = 0; i < cols; i++) {
         var span = Math.min(BOARD_SIZE, w - i * BOARD_SIZE);
-        c.fillText(String.fromCharCode(65 + i), px + (i * BOARD_SIZE + span / 2) * cell, py - 25);
+        c.fillText(String.fromCharCode(65 + i), px + (i * BOARD_SIZE + span / 2) * cell, py - 25 * s);
       }
       c.textAlign = 'right';
       for (i = 0; i < rows; i++) {
         var spanY = Math.min(BOARD_SIZE, h - i * BOARD_SIZE);
-        c.fillText(String(i + 1), px - 24, py + (i * BOARD_SIZE + spanY / 2) * cell);
+        c.fillText(String(i + 1), px - 24 * s, py + (i * BOARD_SIZE + spanY / 2) * cell);
       }
     }
   }
 
   function drawExportCodes(c, px, py, w, h, cell) {
     if (cell < 13) return;
-    c.font = '600 ' + clamp(cell * 0.36, 6.2, 9).toFixed(1) + 'px ' + MONO;
+    c.font = '600 ' + clamp(cell * 0.36, 7, 16).toFixed(1) + 'px ' + MONO;
     c.textAlign = 'center';
     c.textBaseline = 'middle';
     for (var gy = 0; gy < h; gy++) {
@@ -2372,6 +2396,55 @@
     }
   }
 
+  var exportResult = null;
+
+  function isMobileExport() {
+    return (navigator.maxTouchPoints > 0 && window.matchMedia('(pointer: coarse)').matches) ||
+      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  }
+
+  function downloadBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 6000);
+  }
+
+  function closeExportResult() {
+    if (els.exportDialog.open) els.exportDialog.close();
+  }
+
+  function showExportResult(blob, filename, boardW, boardH, pixelW, pixelH) {
+    if (exportResult) URL.revokeObjectURL(exportResult.url);
+    var url = URL.createObjectURL(blob);
+    var file = null;
+    try {
+      file = new File([blob], filename, { type: 'image/png' });
+    } catch (e) { file = null; }
+
+    exportResult = { blob: blob, url: url, file: file, filename: filename };
+    els.exportPreview.src = url;
+    els.exportMeta.textContent = boardW + ' × ' + boardH + ' 格 · ' +
+      pixelW + ' × ' + pixelH + ' px · ' + formatBytes(blob.size);
+    var canShare = false;
+    try {
+      canShare = !!(file && navigator.canShare && navigator.canShare({ files: [file] }));
+    } catch (e) { canShare = false; }
+    els.btnExportShare.hidden = !canShare;
+    try {
+      if (!els.exportDialog.open) els.exportDialog.showModal();
+    } catch (e2) {
+      exportResult = null;
+      URL.revokeObjectURL(url);
+      downloadBlob(blob, filename);
+      toast('已下载 PNG');
+    }
+  }
+
   function exportPNG() {
     if (!state.cells) { toast('先上传一张图片'); return; }
     if (!state.total) { toast('图纸还是空的'); return; }
@@ -2379,23 +2452,30 @@
     var w = state.settings.width;
     var h = state.settings.height;
     var used = getUsedColors();
-    var cell = Math.max(12, Math.min(26, Math.floor(3800 / Math.max(w, h))));
-    var pad = 40;
-    var gutter = 44;
-    var headerH = 96;
-    var footerH = 54;
-    var rowH = 20;
-    var colW = 250;
-    var gap = 18;
+    var mobileExport = isMobileExport();
+    var cell = mobileExport
+      ? Math.max(16, Math.min(40, Math.floor(3200 / Math.max(w, h))))
+      : Math.max(16, Math.min(44, Math.floor(4400 / Math.max(w, h))));
+    var S = cell / 26;
+    var pad = Math.round(40 * S);
+    var gutter = Math.round(44 * S);
+    var headerH = Math.round(96 * S);
+    var footerH = Math.round(54 * S);
+    var rowH = Math.max(16, Math.round(20 * S));
+    var colW = Math.max(210, Math.round(250 * S));
+    var gap = Math.round(18 * S);
 
     var patternW = w * cell;
     var patternH = h * cell;
     var rowsCap = Math.max(8, Math.floor(patternH / rowH));
-    var legendCols = Math.max(1, Math.ceil(used.length / rowsCap));
+    var legendCols = used.length ? Math.max(1, Math.ceil(used.length / rowsCap)) : 0;
     var legendW = used.length ? legendCols * colW + (legendCols - 1) * gap : 0;
-    var contentW = patternW + gutter * 2 + (used.length ? 40 + legendW : 0);
+    var legendRows = used.length ? (legendCols > 1 ? rowsCap : used.length) : 0;
+    var legendH = used.length ? 42 * S + legendRows * rowH : 0;
+    var contentH = Math.max(patternH, legendH);
+    var contentW = patternW + gutter * 2 + (used.length ? 40 * S + legendW : 0);
     var totalW = pad * 2 + contentW;
-    var totalH = pad + headerH + patternH + gutter * 2 + footerH;
+    var totalH = pad + headerH + contentH + gutter * 2 + footerH;
 
     if (totalW * totalH > 45e6) {
       toast('图纸太大，暂时无法导出');
@@ -2413,29 +2493,29 @@
     var py = pad + headerH + gutter;
 
     xctx.fillStyle = '#2b2620';
-    xctx.font = '800 28px ' + SANS;
+    xctx.font = '800 ' + (28 * S) + 'px ' + SANS;
     xctx.textBaseline = 'alphabetic';
     xctx.textAlign = 'left';
-    xctx.fillText('拼豆图纸', pad, pad + 34);
+    xctx.fillText('拼豆图纸', pad, pad + 34 * S);
 
     xctx.fillStyle = '#7b7264';
-    xctx.font = '400 12px ' + SANS;
+    xctx.font = '400 ' + (12 * S) + 'px ' + SANS;
     xctx.fillText(w + ' × ' + h + '   ·   ' + fmtNum(state.total) + ' 颗豆   ·   ' +
-      used.length + ' 色', pad, pad + 58);
+      used.length + ' 色', pad, pad + 62 * S);
 
     xctx.textAlign = 'right';
     xctx.fillStyle = '#d45a38';
-    xctx.font = '800 16px ' + SANS;
-    xctx.fillText('拼斯特豆豆', totalW - pad, pad + 30);
+    xctx.font = '800 ' + (16 * S) + 'px ' + SANS;
+    xctx.fillText('拼斯特豆豆', totalW - pad, pad + 32 * S);
     xctx.fillStyle = '#9a9080';
-    xctx.font = '400 10px ' + SANS;
-    xctx.fillText('拼豆图纸工坊', totalW - pad, pad + 48);
+    xctx.font = '400 ' + (10 * S) + 'px ' + SANS;
+    xctx.fillText('拼豆图纸工坊', totalW - pad, pad + 52 * S);
 
     xctx.strokeStyle = '#e5dccd';
-    xctx.lineWidth = 1;
+    xctx.lineWidth = Math.max(1, S);
     xctx.beginPath();
-    xctx.moveTo(pad, pad + headerH - 14);
-    xctx.lineTo(totalW - pad, pad + headerH - 14);
+    xctx.moveTo(pad, pad + headerH - 14 * S);
+    xctx.lineTo(totalW - pad, pad + headerH - 14 * S);
     xctx.stroke();
 
     xctx.imageSmoothingEnabled = false;
@@ -2447,29 +2527,32 @@
     drawExportRulers(xctx, px, py, patternW, patternH, w, h, cell);
 
     xctx.strokeStyle = '#d8cbb8';
-    xctx.lineWidth = 1;
+    xctx.lineWidth = Math.max(1, S);
     xctx.strokeRect(px - 0.5, py - 0.5, patternW + 1, patternH + 1);
 
     if (used.length) {
-      var lx = px + patternW + 40;
+      var lx = px + patternW + 40 * S;
       var ly = py;
       xctx.textAlign = 'left';
       xctx.textBaseline = 'alphabetic';
       xctx.fillStyle = '#2b2620';
-      xctx.font = '700 14px ' + SANS;
-      xctx.fillText('色号清单', lx, ly + 2);
+      xctx.font = '700 ' + (14 * S) + 'px ' + SANS;
+      xctx.fillText('色号清单', lx, ly + 2 * S);
       xctx.fillStyle = '#8a8172';
-      xctx.font = '400 10px ' + SANS;
-      xctx.fillText(used.length + ' 种颜色 · 按用量排序', lx, ly + 20);
+      xctx.font = '400 ' + (10 * S) + 'px ' + SANS;
+      xctx.fillText(used.length + ' 种颜色 · 按用量排序', lx, ly + 20 * S);
 
-      var startY = ly + 42;
-      xctx.font = '600 10px ' + MONO;
+      var startY = ly + 42 * S;
+      xctx.font = '600 ' + (10 * S) + 'px ' + MONO;
       xctx.fillStyle = '#9a9080';
-      xctx.fillText('色号', lx, startY - 9);
+      xctx.fillText('色号', lx, startY - 9 * S);
       xctx.textAlign = 'right';
-      xctx.fillText('颗数', lx + colW - 44, startY - 9);
-      xctx.fillText('占比', lx + colW - 2, startY - 9);
+      xctx.fillText('颗数', lx + colW - 44 * S, startY - 9 * S);
+      xctx.fillText('占比', lx + colW - 2 * S, startY - 9 * S);
       xctx.textAlign = 'left';
+
+      var swatch = Math.max(10, 13 * S);
+      var swatchY = Math.max(2, 3 * S);
 
       for (var i = 0; i < used.length; i++) {
         var u = used[i];
@@ -2477,53 +2560,55 @@
         var row = i % rowsCap;
         var rx = lx + col * (colW + gap);
         var ry = startY + row * rowH;
+        var midY = ry + rowH / 2;
 
         if (row % 2 === 0) {
           xctx.fillStyle = '#faf7f1';
-          xctx.fillRect(rx - 4, ry, colW, rowH);
+          xctx.fillRect(rx - 4 * S, ry, colW, rowH);
         }
 
         xctx.fillStyle = u.color.hex;
-        xctx.fillRect(rx, ry + 3, 13, 13);
+        xctx.fillRect(rx, ry + swatchY, swatch, swatch);
         xctx.strokeStyle = 'rgba(40, 30, 15, .18)';
-        xctx.lineWidth = 0.6;
-        xctx.strokeRect(rx + 0.3, ry + 3.3, 13, 13);
+        xctx.lineWidth = Math.max(0.6, 0.6 * S);
+        xctx.strokeRect(rx + 0.3, ry + swatchY + 0.3, swatch, swatch);
 
         xctx.fillStyle = '#2b2620';
-        xctx.font = '600 10px ' + MONO;
+        xctx.font = '600 ' + (10 * S) + 'px ' + MONO;
         xctx.textBaseline = 'middle';
-        xctx.fillText(u.color.code, rx + 20, ry + 10);
+        xctx.fillText(u.color.code, rx + 20 * S, midY);
 
         xctx.textAlign = 'right';
         xctx.fillStyle = '#3d362c';
-        xctx.font = '500 10px ' + MONO;
-        xctx.fillText(fmtNum(u.count), rx + colW - 44, ry + 10);
+        xctx.font = '500 ' + (10 * S) + 'px ' + MONO;
+        xctx.fillText(fmtNum(u.count), rx + colW - 44 * S, midY);
         xctx.fillStyle = '#9a9080';
-        xctx.font = '400 9px ' + MONO;
+        xctx.font = '400 ' + (9 * S) + 'px ' + MONO;
         var pct = state.total ? (u.count / state.total * 100) : 0;
-        xctx.fillText((pct > 0 && pct < 0.1 ? '<0.1' : pct.toFixed(1)) + '%', rx + colW - 2, ry + 10);
+        xctx.fillText((pct > 0 && pct < 0.1 ? '<0.1' : pct.toFixed(1)) + '%', rx + colW - 2 * S, midY);
         xctx.textAlign = 'left';
         xctx.textBaseline = 'alphabetic';
       }
     }
 
     xctx.strokeStyle = '#e5dccd';
-    xctx.lineWidth = 1;
+    xctx.lineWidth = Math.max(1, S);
     xctx.beginPath();
-    xctx.moveTo(pad, totalH - footerH + 8);
-    xctx.lineTo(totalW - pad, totalH - footerH + 8);
+    xctx.moveTo(pad, totalH - footerH + 8 * S);
+    xctx.lineTo(totalW - pad, totalH - footerH + 8 * S);
     xctx.stroke();
 
     xctx.fillStyle = '#8a8172';
-    xctx.font = '400 9px ' + SANS;
+    xctx.font = '400 ' + (9 * S) + 'px ' + SANS;
     xctx.textBaseline = 'alphabetic';
     xctx.textAlign = 'left';
-    xctx.fillText('拼斯特豆豆 · 拼豆图纸', pad, totalH - footerH + 28);
+    xctx.fillText('拼斯特豆豆 · 拼豆图纸', pad, totalH - footerH + 28 * S);
     xctx.textAlign = 'center';
-    xctx.fillText('色值来自 MARD 221 公开色卡，实物颜色可能存在色差', totalW / 2, totalH - footerH + 28);
+    xctx.fillText('色值来自 MARD 221 公开色卡，实物颜色可能存在色差', totalW / 2, totalH - footerH + 28 * S);
     xctx.textAlign = 'right';
-    xctx.fillText('生成于 ' + fullDateLabel(), totalW - pad, totalH - footerH + 28);
+    xctx.fillText('生成于 ' + fullDateLabel(), totalW - pad, totalH - footerH + 28 * S);
 
+    var filename = '拼豆图纸_' + w + 'x' + h + '_' + fileStamp() + '.png';
     els.btnExport.disabled = true;
     c.toBlob(function (blob) {
       els.btnExport.disabled = !state.cells;
@@ -2531,15 +2616,12 @@
         toast('PNG 生成失败，请调小图纸尺寸再试');
         return;
       }
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = '拼豆图纸_' + w + 'x' + h + '_' + fileStamp() + '.png';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(function () { URL.revokeObjectURL(url); }, 6000);
-      toast('PNG 图纸已导出');
+      if (isMobileExport()) {
+        showExportResult(blob, filename, w, h, c.width, c.height);
+      } else {
+        downloadBlob(blob, filename);
+        toast('PNG 图纸已下载');
+      }
     }, 'image/png');
   }
 
@@ -3535,9 +3617,42 @@
     });
     cropCanvas.addEventListener('wheel', onComposerWheel, { passive: false });
 
+    els.btnNewDesign.addEventListener('click', newProject);
     els.btnProjects.addEventListener('click', openProjectsDialog);
     els.btnCloseProjects.addEventListener('click', function () { els.projectsDialog.close(); });
     els.btnNewProject.addEventListener('click', newProject);
+
+    els.btnCloseExport.addEventListener('click', closeExportResult);
+    els.btnExportDownload.addEventListener('click', function () {
+      if (!exportResult) return;
+      downloadBlob(exportResult.blob, exportResult.filename);
+      toast('PNG 图纸已下载');
+    });
+    els.btnExportShare.addEventListener('click', function () {
+      if (!exportResult || !exportResult.file) return;
+      navigator.share({
+        files: [exportResult.file],
+        title: '拼豆图纸',
+        text: '拼斯特豆豆 · 拼豆图纸'
+      }).catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        toast('分享失败，可长按图片保存');
+      });
+    });
+    els.exportDialog.addEventListener('close', function () {
+      if (!exportResult) return;
+      var old = exportResult;
+      exportResult = null;
+      els.exportPreview.removeAttribute('src');
+      setTimeout(function () { URL.revokeObjectURL(old.url); }, 1500);
+    });
+    els.exportDialog.addEventListener('click', function (e) {
+      if (e.target !== els.exportDialog) return;
+      var r = els.exportDialog.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
+        closeExportResult();
+      }
+    });
 
     els.projectsDialog.addEventListener('click', function (e) {
       if (e.target !== els.projectsDialog) return;
