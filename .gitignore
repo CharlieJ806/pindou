@@ -1,0 +1,10 @@
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# 本地测试 / 截图临时目录
+_shot*/
+_downloads/
+_probe*/
+_cdp-*/
